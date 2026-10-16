@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ProgressRing from './ProgressRing.jsx'
 import { formatTime, useHotkeys, useNow } from '../utils.js'
 
-export default function Stopwatch() {
+export default function Stopwatch({ onRunningChange }) {
   const [elapsed, setElapsed] = useState(0)     // 일시정지 시점까지 누적된 시간
   const [startedAt, setStartedAt] = useState(null)
   const [laps, setLaps] = useState([])          // 누적 시간 목록 (최신이 앞)
@@ -10,6 +10,11 @@ export default function Stopwatch() {
   const running = startedAt !== null
   const now = useNow(running)
   const current = running ? elapsed + now - startedAt : elapsed
+
+  useEffect(() => {
+    onRunningChange?.(running)
+    return () => onRunningChange?.(false)
+  }, [running, onRunningChange])
 
   const toggle = () => {
     if (running) {

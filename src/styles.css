@@ -22,6 +22,16 @@ body {
 }
 #root { width: 100%; display: flex; justify-content: center; }
 .app { width: 100%; max-width: 440px; text-align: center; }
+.layout { display: flex; flex-direction: column; gap: 28px; }
+.main { min-width: 0; }
+
+/* 넓은 화면에서는 타이머 옆에 캐릭터 */
+@media (min-width: 860px) {
+  .app { max-width: 800px; }
+  .layout { flex-direction: row; align-items: flex-start; }
+  .main { flex: 1 1 440px; }
+  .pet-card { flex: 0 0 320px; position: sticky; top: 24px; }
+}
 
 .title {
   margin: 0 0 20px; font-size: 30px; font-weight: 900; letter-spacing: -1px; font-style: italic;
@@ -91,3 +101,79 @@ body {
 .laps li span:last-child { color: var(--fg); font-family: var(--num); font-size: 22px; }
 
 .hint { margin-top: 24px; font-size: 12px; color: var(--muted); }
+
+/* ───── 캐릭터 카드 ───── */
+.pet-card { background: var(--card); border: 1px solid var(--line); border-radius: 24px;
+            padding: 18px 18px 20px; text-align: left; }
+.pet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pet-name { flex: 1; min-width: 0; background: none; border: 0; border-bottom: 1px dashed transparent;
+            color: var(--fg); font: inherit; font-size: 20px; font-weight: 900; padding: 2px 0; }
+.pet-name:hover, .pet-name:focus { outline: none; border-bottom-color: var(--muted); }
+.pet-level { font-family: var(--num); font-size: 26px; color: var(--accent); letter-spacing: .5px; }
+.pet-species { font-size: 13px; color: var(--muted); margin-top: -2px; }
+
+.pet-stage { position: relative; height: 210px; margin: 10px 0 14px; border-radius: 18px; overflow: hidden;
+             background: linear-gradient(#1d2a05 0%, #121316 70%); }
+.pet-stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 34px;
+                    background: repeating-linear-gradient(90deg, #1c1e22 0 18px, #191a1e 18px 36px);
+                    border-top: 1px solid var(--line); }
+
+.bubble { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
+          max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          background: var(--fg); color: var(--accent-ink); font-size: 13px; font-weight: 700;
+          padding: 6px 12px; border-radius: 12px; }
+.bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px;
+                 border: 6px solid transparent; border-bottom: 0; border-top-color: var(--fg); }
+.bubble.pop { background: var(--accent); animation: pop .4s ease-out; }
+.bubble.pop::after { border-top-color: var(--accent); }
+@keyframes pop { 0% { transform: translateX(-50%) scale(.6); } 70% { transform: translateX(-50%) scale(1.08); } }
+
+/* 좌우로 걸어다니기 (방향 전환 포함) */
+.pet-walker { position: absolute; left: 50%; bottom: 22px; width: 120px; height: 120px; margin-left: -60px; z-index: 1;
+              animation: walk 9s linear infinite; }
+@keyframes walk {
+  0%     { transform: translateX(-70px) scaleX(1); }
+  48%    { transform: translateX(70px) scaleX(1); }
+  50%    { transform: translateX(70px) scaleX(-1); }
+  98%    { transform: translateX(-70px) scaleX(-1); }
+  100%   { transform: translateX(-70px) scaleX(1); }
+}
+.pet-body { width: 100%; height: 100%; animation: bob 1.2s ease-in-out infinite; transform-origin: 50% 100%; }
+.pet-svg { width: 100%; height: 100%; overflow: visible; }
+.pet-sweat { opacity: 0; }
+@keyframes bob { 50% { transform: translateY(-4px) scaleY(.97); } }
+
+/* 운동 중: 빨리 뛰고 땀 흘리기 */
+.pet-active .pet-walker { animation-duration: 3.2s; }
+.pet-active .pet-body { animation: hop .45s ease-in-out infinite; }
+.pet-active .pet-sweat { opacity: 1; animation: sweat .9s ease-in infinite; }
+@keyframes hop { 0%, 100% { transform: translateY(0) scale(1.04, .94); } 50% { transform: translateY(-16px) scale(.97, 1.03); } }
+@keyframes sweat { from { transform: translateY(0); opacity: 1; } to { transform: translateY(14px); opacity: 0; } }
+
+/* 완료 / 레벨 업: 제자리 점프 */
+.pet-celebrate .pet-walker { animation-play-state: paused; }
+.pet-celebrate .pet-body { animation: jump .6s cubic-bezier(.3, 0, .4, 1) infinite; }
+@keyframes jump { 0%, 100% { transform: translateY(0) scale(1.06, .92); } 45% { transform: translateY(-34px) scale(.95, 1.05); } }
+.evolving .pet-body { filter: drop-shadow(0 0 14px var(--accent)) brightness(1.3); }
+
+/* 알은 걷지 않고 흔들흔들 */
+.stage-0 .pet-walker { animation: none; }
+.stage-0 .pet-body { animation: wobble 2.4s ease-in-out infinite; }
+.stage-0.pet-active .pet-body { animation: wobble .5s ease-in-out infinite; }
+@keyframes wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+
+.xp-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.xp-row span:first-child { font-family: var(--num); font-size: 16px; color: var(--accent); letter-spacing: 1px; }
+.xp-bar { height: 10px; background: var(--ring-bg); border-radius: 999px; overflow: hidden; }
+.xp-bar div { height: 100%; background: var(--accent); border-radius: 999px; transition: width .5s;
+              box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent); }
+
+.pet-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.pet-stats div { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px;
+                 display: flex; flex-direction: column; gap: 2px; }
+.pet-stats b { font-family: var(--num); font-weight: 400; font-size: 24px; letter-spacing: .5px; }
+.pet-stats span { font-size: 12px; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-walker, .pet-body, .pet-sweat, .bubble.pop { animation: none !important; }
+}

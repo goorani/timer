@@ -18,7 +18,7 @@ const toMs = ({ h, m, s }) => ((+h || 0) * 3600 + (+m || 0) * 60 + (+s || 0)) * 
 const toFields = (sec) => ({ h: Math.floor(sec / 3600), m: Math.floor(sec / 60) % 60, s: sec % 60 })
 const durationLabel = (sec) => (sec >= 60 ? `${sec / 60}분` : `${sec}초`)
 
-export default function Timer() {
+export default function Timer({ onRunningChange, onWarnChange, onComplete }) {
   const [fields, setFields] = useState(DEFAULT_FIELDS)
   const [exercise, setExercise] = useState(null)     // 선택한 운동 이름 (직접 설정이면 null)
   const [total, setTotal] = useState(toMs(DEFAULT_FIELDS))
@@ -37,8 +37,9 @@ export default function Timer() {
       setRemaining(0)
       setDone(true)
       beep()
+      onComplete?.(total / 1000)
     }
-  }, [running, left])
+  }, [running, left, total, onComplete])
 
   useEffect(() => {
     document.title = done
@@ -92,6 +93,16 @@ export default function Timer() {
 
   const startLabel = running ? '일시정지' : remaining > 0 && remaining < total ? '계속' : '시작'
   const warn = running && left <= WARN_MS
+
+  // 부모(캐릭터)에게 운동 상태 알리기. 탭을 바꿔 언마운트되면 멈춘 것으로 처리
+  useEffect(() => {
+    onRunningChange?.(running)
+    return () => onRunningChange?.(false)
+  }, [running, onRunningChange])
+  useEffect(() => {
+    onWarnChange?.(warn)
+    return () => onWarnChange?.(false)
+  }, [warn, onWarnChange])
 
   return (
     <>
